@@ -10,7 +10,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { useToast } from '@/hooks/use-toast'
-import { Play, Pause, Calendar, FileText, Download } from 'lucide-react'
+import { Play, Pause, Calendar, FileText } from 'lucide-react'
 import { SCRIPTS } from '@/lib/constants'
 import { apiClient } from '@/lib/api-client'
 import { API_ROUTES } from '@/lib/config'
@@ -39,6 +39,12 @@ export function ScriptList({ warehouse }: ScriptListProps) {
   >({})
   const { toast } = useToast()
 
+  const findScheduledJob = (jobs: Job[], scriptId: number) => {
+    return jobs.find(
+      (job) => job.script_id === scriptId && job.job_id.startsWith('script_') // Only get scheduled jobs, not manual runs
+    )
+  }
+
   const warehouseScripts = SCRIPTS.filter(
     (script) => script.warehouse === warehouse
   )
@@ -66,19 +72,18 @@ export function ScriptList({ warehouse }: ScriptListProps) {
     }
   }
 
-  const handleRunNow = async (scriptId: string) => {
+  const handleRunNow = async (scriptId: number) => {
     try {
       const response: RunScriptResponse = await apiClient.post(
-        API_ROUTES.runScript(scriptId)
+        API_ROUTES.runScript(scriptId.toString())
       )
 
       if (response.status === 'completed') {
-        // Store the execution information
         setScriptExecutions((prev) => ({
           ...prev,
-          [parseInt(scriptId)]: {
+          [scriptId]: {
             execution_id: response.execution_id,
-            script_id: parseInt(scriptId),
+            script_id: scriptId,
             timestamp: new Date().toISOString(),
             status: response.status,
           },
@@ -105,7 +110,7 @@ export function ScriptList({ warehouse }: ScriptListProps) {
 
   const handleToggleStatus = async (jobId: string) => {
     try {
-      const response = await apiClient.post(API_ROUTES.toggleJob(jobId))
+      await apiClient.post(API_ROUTES.toggleJob(jobId))
       await fetchJobs()
       toast({
         title: 'Success',
@@ -123,43 +128,6 @@ export function ScriptList({ warehouse }: ScriptListProps) {
     }
   }
 
-  const handleDownloadLogs = async (scriptId: string | number) => {
-    try {
-      // Assuming your API provides an endpoint for downloading logs
-      const response = await fetch(
-        `${API_ROUTES.scripts}/${scriptId}/logs/download`
-      )
-      if (!response.ok) throw new Error('Failed to download logs')
-
-      // Create a blob from the response and trigger download
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `script_${scriptId}_logs.txt`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      window.URL.revokeObjectURL(url)
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description:
-          error instanceof Error ? error.message : 'Failed to download logs',
-        variant: 'destructive',
-      })
-    }
-  }
-
-  if (loading) {
-    return (
-      <Card className="p-6">
-        <div className="flex items-center justify-center">
-          <p className="text-muted-foreground">Loading scripts...</p>
-        </div>
-      </Card>
-    )
-  }
   const handleViewLogs = (script: Script) => {
     const execution = scriptExecutions[script.id]
     if (!execution) {
@@ -174,11 +142,21 @@ export function ScriptList({ warehouse }: ScriptListProps) {
     setShowLogsModal(true)
   }
 
+  if (loading) {
+    return (
+      <Card className="p-6">
+        <div className="flex items-center justify-center">
+          <p className="text-muted-foreground">Loading scripts...</p>
+        </div>
+      </Card>
+    )
+  }
+
   return (
     <TooltipProvider>
       <div className="space-y-4">
         {warehouseScripts.map((script) => {
-          const job = jobs.find((j) => j.script_id === script.id)
+          const job = findScheduledJob(jobs, script.id)
           const hasRecentExecution = !!scriptExecutions[script.id]
 
           return (
@@ -209,7 +187,7 @@ export function ScriptList({ warehouse }: ScriptListProps) {
                       <Button
                         variant="outline"
                         size="icon"
-                        onClick={() => handleRunNow(script.id.toString())}
+                        onClick={() => handleRunNow(script.id)}
                       >
                         <Play className="h-4 w-4" />
                       </Button>
@@ -269,8 +247,6 @@ export function ScriptList({ warehouse }: ScriptListProps) {
                       {hasRecentExecution ? 'View logs' : 'No recent execution'}
                     </TooltipContent>
                   </Tooltip>
-
-                  {/* ... other buttons ... */}
                 </div>
               </div>
             </Card>
@@ -283,6 +259,7 @@ export function ScriptList({ warehouse }: ScriptListProps) {
               open={showScheduleModal}
               onOpenChange={setShowScheduleModal}
               script={selectedScript}
+              job={findScheduledJob(jobs, selectedScript.id)}
               onSchedule={fetchJobs}
             />
             <LogsModal
