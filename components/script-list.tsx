@@ -74,24 +74,29 @@ export function ScriptList({ warehouse }: ScriptListProps) {
 
   const handleRunNow = async (scriptId: number) => {
     try {
+      toast({
+        title: 'Script Started',
+        description: 'Script execution has begun',
+      })
+
       const response: RunScriptResponse = await apiClient.post(
         API_ROUTES.runScript(scriptId.toString())
       )
 
-      if (response.status === 'completed') {
-        setScriptExecutions((prev) => ({
-          ...prev,
-          [scriptId]: {
-            execution_id: response.execution_id,
-            script_id: scriptId,
-            timestamp: new Date().toISOString(),
-            status: response.status,
-          },
-        }))
+      setScriptExecutions((prev) => ({
+        ...prev,
+        [scriptId]: {
+          execution_id: response.execution_id,
+          script_id: scriptId,
+          timestamp: new Date().toISOString(),
+          status: response.status,
+        },
+      }))
 
+      if (response.status === 'completed') {
         toast({
           title: 'Success',
-          description: 'Script execution started',
+          description: 'Script execution completed successfully',
         })
       } else if (response.status === 'failed') {
         throw new Error(response.error || 'Script execution failed')
@@ -108,9 +113,9 @@ export function ScriptList({ warehouse }: ScriptListProps) {
     }
   }
 
-  const handleToggleStatus = async (jobId: string) => {
+  const handleToggleStatus = async (jobId: number) => {
     try {
-      await apiClient.post(API_ROUTES.toggleJob(jobId))
+      await apiClient.post(API_ROUTES.toggleJob(jobId.toString()))
       await fetchJobs()
       toast({
         title: 'Success',
@@ -201,7 +206,7 @@ export function ScriptList({ warehouse }: ScriptListProps) {
                         <Button
                           variant="outline"
                           size="icon"
-                          onClick={() => handleToggleStatus(job.job_id)}
+                          onClick={() => handleToggleStatus(job.id)}
                         >
                           {job.enabled ? (
                             <Pause className="h-4 w-4" />
