@@ -1,29 +1,37 @@
-"use client";
+'use client'
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
-import { Activity, Package, LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import Link from 'next/link'
+import { usePathname, useRouter } from 'next/navigation'
+import { signOut } from 'next-auth/react'
+import { cn } from '@/lib/utils'
+import { Activity, Package, LogOut } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from '@/components/ui/tooltip'
 
 const navigation = [
-  { name: "Scripts", href: "/", icon: Activity },
-  { name: "View Products", href: "/products", icon: Package },
-];
+  { name: 'Scripts', href: '/', icon: Activity },
+  { name: 'View Products', href: '/products', icon: Package },
+]
 
 export function MainNav() {
-  const pathname = usePathname();
+  const pathname = usePathname()
+  const router = useRouter()
 
-  const handleLogout = () => {
-    // Add logout logic here
-    console.log("Logging out...");
-  };
+  const handleLogout = async () => {
+    try {
+      await signOut({
+        redirect: true,
+        callbackUrl: '/login',
+      })
+    } catch (error) {
+      console.error('Logout failed:', error)
+    }
+  }
 
   return (
     <header className="border-b">
@@ -34,22 +42,22 @@ export function MainNav() {
         </div>
         <nav className="flex gap-6">
           {navigation.map((item) => {
-            const Icon = item.icon;
+            const Icon = item.icon
             return (
               <Link
                 key={item.name}
                 href={item.href}
                 className={cn(
-                  "flex items-center space-x-2 text-sm font-medium transition-colors hover:text-primary",
+                  'flex items-center space-x-2 text-sm font-medium transition-colors hover:text-primary',
                   pathname === item.href
-                    ? "text-primary"
-                    : "text-muted-foreground"
+                    ? 'text-primary'
+                    : 'text-muted-foreground'
                 )}
               >
                 <Icon className="h-4 w-4" />
                 <span>{item.name}</span>
               </Link>
-            );
+            )
           })}
         </nav>
         <div className="ml-auto">
@@ -71,5 +79,5 @@ export function MainNav() {
         </div>
       </div>
     </header>
-  );
+  )
 }
