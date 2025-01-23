@@ -7,7 +7,7 @@ class ApiError extends Error {
   }
 }
 
-async function handleResponse(response: Response) {
+async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const error = await response
       .json()
@@ -15,22 +15,21 @@ async function handleResponse(response: Response) {
     throw new ApiError(response.status, error.detail || 'An error occurred')
   }
 
-  // Check if the response is empty
   const contentType = response.headers.get('content-type')
   if (contentType && contentType.includes('application/json')) {
     return response.json()
   }
 
-  return response.text()
+  return response.text() as T
 }
 
 export const apiClient = {
-  get: async (url: string) => {
+  get: async <T>(url: string): Promise<T> => {
     const response = await fetch(url)
-    return handleResponse(response)
+    return handleResponse<T>(response)
   },
 
-  post: async (url: string, data?: any) => {
+  post: async <T>(url: string, data?: any): Promise<T> => {
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -38,10 +37,10 @@ export const apiClient = {
       },
       body: data ? JSON.stringify(data) : undefined,
     })
-    return handleResponse(response)
+    return handleResponse<T>(response)
   },
 
-  put: async (url: string, data: any) => {
+  put: async <T>(url: string, data: any): Promise<T> => {
     const response = await fetch(url, {
       method: 'PUT',
       headers: {
@@ -49,10 +48,10 @@ export const apiClient = {
       },
       body: JSON.stringify(data),
     })
-    return handleResponse(response)
+    return handleResponse<T>(response)
   },
 
-  patch: async (url: string, data: any) => {
+  patch: async <T>(url: string, data: any): Promise<T> => {
     const response = await fetch(url, {
       method: 'PATCH',
       headers: {
@@ -60,13 +59,13 @@ export const apiClient = {
       },
       body: JSON.stringify(data),
     })
-    return handleResponse(response)
+    return handleResponse<T>(response)
   },
 
-  delete: async (url: string) => {
+  delete: async <T>(url: string): Promise<T> => {
     const response = await fetch(url, {
       method: 'DELETE',
     })
-    return handleResponse(response)
+    return handleResponse<T>(response)
   },
 }

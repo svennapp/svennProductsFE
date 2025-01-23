@@ -11,24 +11,23 @@ import {
 } from '@/components/ui/tooltip'
 import { useToast } from '@/hooks/use-toast'
 import { Play, Pause, Calendar, FileText } from 'lucide-react'
-import { SCRIPTS } from '@/lib/constants'
 import { apiClient } from '@/lib/api-client'
 import { API_ROUTES } from '@/lib/config'
 import type {
   Job,
   Script,
-  Warehouse,
   RunScriptResponse,
   ScriptExecution,
 } from '@/lib/types'
 import { ScheduleModal } from './schedule-modal'
 import { LogsModal } from './logs-modal'
+import { useWarehouseScripts } from '@/hooks/use-warehouse-scripts'
 
 interface ScriptListProps {
-  warehouse: Warehouse
+  warehouseId: number
 }
 
-export function ScriptList({ warehouse }: ScriptListProps) {
+export function ScriptList({ warehouseId }: ScriptListProps) {
   const [jobs, setJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedScript, setSelectedScript] = useState<Script | null>(null)
@@ -38,25 +37,33 @@ export function ScriptList({ warehouse }: ScriptListProps) {
     Record<number, ScriptExecution>
   >({})
   const { toast } = useToast()
+  const { scripts, isLoading: scriptsLoading, error: scriptsError } =
+    useWarehouseScripts(warehouseId)
+
+  useEffect(() => {
+    if (scriptsError) {
+      toast({
+        title: 'Error',
+        description: scriptsError,
+        variant: 'destructive',
+      })
+    }
+  }, [scriptsError, toast])
 
   const findScheduledJob = (jobs: Job[], scriptId: number) => {
     return jobs.find(
-      (job) => job.script_id === scriptId && job.job_id.startsWith('script_') // Only get scheduled jobs, not manual runs
+      (job) => job.script_id === scriptId && job.job_id.startsWith('script_')
     )
   }
 
-  const warehouseScripts = SCRIPTS.filter(
-    (script) => script.warehouse === warehouse
-  )
-
   useEffect(() => {
     fetchJobs()
-  }, [warehouse])
+  }, [warehouseId])
 
   const fetchJobs = async () => {
     setLoading(true)
     try {
-      const data = await apiClient.get(`${API_ROUTES.jobs}?scheduled_only=true`)
+      const data = await apiClient.get<Job[]>(`${API_ROUTES.jobs}?scheduled_only=true`)
       setJobs(data)
     } catch (error) {
       toast({
@@ -79,7 +86,7 @@ export function ScriptList({ warehouse }: ScriptListProps) {
         description: 'Script execution has begun',
       })
 
-      const response: RunScriptResponse = await apiClient.post(
+      const response = await apiClient.post<RunScriptResponse>(
         API_ROUTES.runScript(scriptId.toString())
       )
 
@@ -115,7 +122,7 @@ export function ScriptList({ warehouse }: ScriptListProps) {
 
   const handleToggleStatus = async (jobId: number) => {
     try {
-      await apiClient.post(API_ROUTES.toggleJob(jobId.toString()))
+      await apiClient.post<{ success: boolean }>(API_ROUTES.toggleJob(jobId.toString()))
       await fetchJobs()
       toast({
         title: 'Success',
@@ -147,7 +154,7 @@ export function ScriptList({ warehouse }: ScriptListProps) {
     setShowLogsModal(true)
   }
 
-  if (loading) {
+  if (loading || scriptsLoading) {
     return (
       <Card className="p-6">
         <div className="flex items-center justify-center">
@@ -160,7 +167,7 @@ export function ScriptList({ warehouse }: ScriptListProps) {
   return (
     <TooltipProvider>
       <div className="space-y-4">
-        {warehouseScripts.map((script) => {
+        {scripts.map((script) => {
           const job = findScheduledJob(jobs, script.id)
           const hasRecentExecution = !!scriptExecutions[script.id]
 

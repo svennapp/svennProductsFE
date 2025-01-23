@@ -1,20 +1,28 @@
 // lib/types.ts
 
 // Warehouse Types
-export type Warehouse = 'byggmakker' | 'monter' | 'maxbo'
+export type WarehouseId = number
 
-export interface Script {
-  id: number // Changed from string to number
+export interface WarehouseResponse {
+  id: WarehouseId
   name: string
   description: string
-  warehouse: Warehouse
+}
+
+export interface Script {
+  id: number
+  name: string
   filename: string
+  script_type: 'spider' | 'python'
+  warehouse_id: number
+  description: string
+  lastExecution?: ScriptExecution
 }
 
 export interface Job {
   id: number
   job_id: string
-  script_id: number // This should be a number
+  script_id: number 
   cron_expression: string
   enabled: boolean
   created_at: string
@@ -46,15 +54,6 @@ export interface RunScriptResponse {
   execution_id: number
   status: 'completed' | 'failed'
   error?: string
-}
-
-export interface Script {
-  id: number
-  name: string
-  description: string
-  warehouse: Warehouse
-  filename: string
-  lastExecution?: ScriptExecution // Add this to track last execution
 }
 
 export interface ProductImage {
@@ -120,4 +119,20 @@ export interface ProductsResponse {
 export interface ProductPriceResponse {
   data: ProductPriceStats
   error?: string
+}
+
+export interface RetailerInfo {
+  retailer_id: number
+  retailer_name: string
+  variant_name: string
+  updated: string
+}
+
+export interface LatestProduct {
+  base_name: string
+  base_unit: string
+  nobb_code: string
+  updated: string
+  images: ProductImage[]
+  retailer: RetailerInfo
 }
