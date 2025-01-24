@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast'
 import { Play, Pause, Calendar, FileText } from 'lucide-react'
 import { apiClient } from '@/lib/api-client'
 import { API_ROUTES } from '@/lib/config'
+import { format } from 'date-fns'
 import type {
   Job,
   Script,
@@ -33,7 +34,7 @@ export function ScriptList({ warehouseId }: ScriptListProps) {
   const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [showLogsModal, setShowLogsModal] = useState(false)
   const { toast } = useToast()
-  const { scripts, isLoading: scriptsLoading, error: scriptsError } =
+  const { scripts, isLoading: scriptsLoading, error: scriptsError, mutate: mutateScripts } =
     useWarehouseScripts(warehouseId)
 
   useEffect(() => {
@@ -75,6 +76,32 @@ export function ScriptList({ warehouseId }: ScriptListProps) {
     }
   }
 
+  const updateScriptExecutionTime = async (scriptId: number) => {
+    try {
+      const response = await apiClient.get<{
+        items: Array<{
+          timestamp: string,
+          execution_status: string
+        }>
+      }>(
+        API_ROUTES.scriptLogs(scriptId) + '?skip=0&limit=1'
+      )
+      
+      if (response.items.length > 0) {
+        // Update the specific script with new execution time using timestamp
+        mutateScripts(
+          scripts?.map(script => 
+            script.id === scriptId 
+              ? { ...script, last_execution_time: response.items[0].timestamp }
+              : script
+          )
+        )
+      }
+    } catch (error) {
+      console.error('Failed to update script execution time:', error)
+    }
+  }
+
   const handleRunNow = async (scriptId: number) => {
     try {
       toast({
@@ -85,6 +112,11 @@ export function ScriptList({ warehouseId }: ScriptListProps) {
       const response = await apiClient.post<RunScriptResponse>(
         API_ROUTES.runScript(scriptId.toString())
       )
+
+      // Add a longer delay to ensure the script has completed and logs are updated
+      setTimeout(() => {
+        updateScriptExecutionTime(scriptId)
+      }, 3000)
 
       if (response.status === 'completed') {
         toast({
@@ -180,7 +212,7 @@ export function ScriptList({ warehouseId }: ScriptListProps) {
                         {hasRecentExecution && (
                           <p className="mt-1 text-sm text-muted-foreground">
                             Last run:{' '}
-                            {script.last_execution_time && new Date(script.last_execution_time).toLocaleString()}
+                            {script.last_execution_time && format(new Date(script.last_execution_time), 'dd.MM.yyyy, HH:mm:ss')}
                           </p>
                         )}
                       </div>
@@ -284,7 +316,7 @@ export function ScriptList({ warehouseId }: ScriptListProps) {
                         {hasRecentExecution && (
                           <p className="mt-1 text-sm text-muted-foreground">
                             Last run:{' '}
-                            {script.last_execution_time && new Date(script.last_execution_time).toLocaleString()}
+                            {script.last_execution_time && format(new Date(script.last_execution_time), 'dd.MM.yyyy, HH:mm:ss')}
                           </p>
                         )}
                       </div>

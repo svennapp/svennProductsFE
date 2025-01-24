@@ -14,4 +14,6 @@ export const API_ROUTES = {
     `${API_BASE_URL}/api/jobs/executions/${executionId}/logs`,
   scriptLastExecution: (scriptId: number) => 
     `${API_BASE_URL}/api/jobs/scripts/${scriptId}/logs?skip=0&limit=1`,
+  scriptLogs: (scriptId: number) => 
+    `${API_BASE_URL}/api/jobs/scripts/${scriptId}/logs`,
 } as const

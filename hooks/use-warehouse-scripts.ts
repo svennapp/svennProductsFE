@@ -10,32 +10,41 @@ export function useWarehouseScripts(warehouseId: number | null) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    async function fetchScripts() {
-      if (!warehouseId) {
-        setScripts([])
-        return
-      }
-
-      try {
-        setIsLoading(true)
-        const data = await apiClient.get<Script[]>(API_ROUTES.warehouseScripts(warehouseId))
-        setScripts(data)
-        setError(null)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch scripts')
-        setScripts([])
-      } finally {
-        setIsLoading(false)
-      }
+  const fetchScripts = async () => {
+    if (!warehouseId) {
+      setScripts([])
+      return
     }
 
+    try {
+      setIsLoading(true)
+      const data = await apiClient.get<Script[]>(API_ROUTES.warehouseScripts(warehouseId))
+      setScripts(data)
+      setError(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch scripts')
+      setScripts([])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
     fetchScripts()
   }, [warehouseId])
+
+  const mutate = (newScripts?: Script[]) => {
+    if (newScripts) {
+      setScripts(newScripts)
+    } else {
+      fetchScripts()
+    }
+  }
 
   return {
     scripts,
     isLoading,
-    error
+    error,
+    mutate
   }
 }
