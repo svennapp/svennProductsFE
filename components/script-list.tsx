@@ -17,7 +17,6 @@ import type {
   Job,
   Script,
   RunScriptResponse,
-  ScriptExecution,
 } from '@/lib/types'
 import { ScheduleModal } from './schedule-modal'
 import { LogsModal } from './logs-modal'
@@ -33,9 +32,6 @@ export function ScriptList({ warehouseId }: ScriptListProps) {
   const [selectedScript, setSelectedScript] = useState<Script | null>(null)
   const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [showLogsModal, setShowLogsModal] = useState(false)
-  const [scriptExecutions, setScriptExecutions] = useState<
-    Record<number, ScriptExecution>
-  >({})
   const { toast } = useToast()
   const { scripts, isLoading: scriptsLoading, error: scriptsError } =
     useWarehouseScripts(warehouseId)
@@ -90,16 +86,6 @@ export function ScriptList({ warehouseId }: ScriptListProps) {
         API_ROUTES.runScript(scriptId.toString())
       )
 
-      setScriptExecutions((prev) => ({
-        ...prev,
-        [scriptId]: {
-          execution_id: response.execution_id,
-          script_id: scriptId,
-          timestamp: new Date().toISOString(),
-          status: response.status,
-        },
-      }))
-
       if (response.status === 'completed') {
         toast({
           title: 'Success',
@@ -141,8 +127,8 @@ export function ScriptList({ warehouseId }: ScriptListProps) {
   }
 
   const handleViewLogs = (script: Script) => {
-    const execution = scriptExecutions[script.id]
-    if (!execution) {
+    const hasRecentExecution = script.last_execution_time != null
+    if (!hasRecentExecution) {
       toast({
         title: 'Error',
         description: 'No recent execution found for this script',
@@ -150,7 +136,8 @@ export function ScriptList({ warehouseId }: ScriptListProps) {
       })
       return
     }
-    setSelectedScript({ ...script, lastExecution: execution })
+
+    setSelectedScript(script)
     setShowLogsModal(true)
   }
 
@@ -175,7 +162,7 @@ export function ScriptList({ warehouseId }: ScriptListProps) {
               .filter((script) => script.script_type === 'spider')
               .map((script) => {
                 const job = findScheduledJob(jobs, script.id)
-                const hasRecentExecution = !!scriptExecutions[script.id]
+                const hasRecentExecution = script.last_execution_time != null
 
                 return (
                   <Card key={script.id} className="p-6">
@@ -193,9 +180,7 @@ export function ScriptList({ warehouseId }: ScriptListProps) {
                         {hasRecentExecution && (
                           <p className="mt-1 text-sm text-muted-foreground">
                             Last run:{' '}
-                            {new Date(
-                              scriptExecutions[script.id].timestamp
-                            ).toLocaleString()}
+                            {script.last_execution_time && new Date(script.last_execution_time).toLocaleString()}
                           </p>
                         )}
                       </div>
@@ -281,7 +266,7 @@ export function ScriptList({ warehouseId }: ScriptListProps) {
               .filter((script) => script.script_type === 'python')
               .map((script) => {
                 const job = findScheduledJob(jobs, script.id)
-                const hasRecentExecution = !!scriptExecutions[script.id]
+                const hasRecentExecution = script.last_execution_time != null
 
                 return (
                   <Card key={script.id} className="p-6">
@@ -299,9 +284,7 @@ export function ScriptList({ warehouseId }: ScriptListProps) {
                         {hasRecentExecution && (
                           <p className="mt-1 text-sm text-muted-foreground">
                             Last run:{' '}
-                            {new Date(
-                              scriptExecutions[script.id].timestamp
-                            ).toLocaleString()}
+                            {script.last_execution_time && new Date(script.last_execution_time).toLocaleString()}
                           </p>
                         )}
                       </div>

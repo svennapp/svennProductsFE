@@ -16,6 +16,7 @@ export interface Script {
   script_type: 'spider' | 'python'
   warehouse_id: number
   description: string
+  last_execution_time?: string
   lastExecution?: ScriptExecution
 }
 
