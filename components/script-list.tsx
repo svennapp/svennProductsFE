@@ -80,6 +80,7 @@ export function ScriptList({ warehouseId }: ScriptListProps) {
     try {
       const response = await apiClient.get<{
         items: Array<{
+          execution_id: number,
           timestamp: string,
           execution_status: string
         }>
@@ -88,11 +89,22 @@ export function ScriptList({ warehouseId }: ScriptListProps) {
       )
       
       if (response.items.length > 0) {
-        // Update the specific script with new execution time using timestamp
+        const lastExecution = {
+          execution_id: response.items[0].execution_id,
+          script_id: scriptId,
+          timestamp: response.items[0].timestamp,
+          status: response.items[0].execution_status as 'pending' | 'completed' | 'failed'
+        }
+
+        // Update the specific script with new execution time and lastExecution
         mutateScripts(
           scripts?.map(script => 
             script.id === scriptId 
-              ? { ...script, last_execution_time: response.items[0].timestamp }
+              ? { 
+                  ...script, 
+                  last_execution_time: response.items[0].timestamp,
+                  lastExecution
+                }
               : script
           )
         )
@@ -159,7 +171,7 @@ export function ScriptList({ warehouseId }: ScriptListProps) {
   }
 
   const handleViewLogs = (script: Script) => {
-    const hasRecentExecution = script.last_execution_time != null
+    const hasRecentExecution = script.last_execution_time != null && script.lastExecution != null
     if (!hasRecentExecution) {
       toast({
         title: 'Error',
@@ -404,11 +416,12 @@ export function ScriptList({ warehouseId }: ScriptListProps) {
         />
       )}
 
-      {selectedScript && (
+      {selectedScript && selectedScript.lastExecution && (
         <LogsModal
           script={selectedScript}
           open={showLogsModal}
           onOpenChange={setShowLogsModal}
+          executionId={selectedScript.lastExecution.execution_id}
         />
       )}
     </TooltipProvider>
