@@ -53,8 +53,16 @@ export interface RunScriptResponse {
   message: string
   job_id: number
   execution_id: number
-  status: 'completed' | 'failed'
-  error?: string
+  status: string
+}
+
+export interface ScriptExecutionStatus {
+  execution_id: number
+  status: 'running' | 'completed' | 'failed'
+  progress: number | null
+  error_message: string | null
+  start_time: string
+  end_time: string | null
 }
 
 export interface ProductImage {

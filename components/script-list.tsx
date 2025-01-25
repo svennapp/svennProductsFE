@@ -18,10 +18,12 @@ import type {
   Job,
   Script,
   RunScriptResponse,
+  ScriptExecutionStatus,
 } from '@/lib/types'
 import { ScheduleModal } from './schedule-modal'
 import { LogsModal } from './logs-modal'
 import { useWarehouseScripts } from '@/hooks/use-warehouse-scripts'
+import { Loader2 } from '@/components/ui/loader'
 
 interface ScriptListProps {
   warehouseId: number
@@ -33,6 +35,7 @@ export function ScriptList({ warehouseId }: ScriptListProps) {
   const [selectedScript, setSelectedScript] = useState<Script | null>(null)
   const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [showLogsModal, setShowLogsModal] = useState(false)
+  const [runningScripts, setRunningScripts] = useState<Set<number>>(new Set())
   const { toast } = useToast()
   const { scripts, isLoading: scriptsLoading, error: scriptsError, mutate: mutateScripts } =
     useWarehouseScripts(warehouseId)
@@ -60,7 +63,7 @@ export function ScriptList({ warehouseId }: ScriptListProps) {
   const fetchJobs = async () => {
     setLoading(true)
     try {
-      const data = await apiClient.get<Job[]>(`${API_ROUTES.jobs}?scheduled_only=true`)
+      const data = await apiClient.get<Job[]>(API_ROUTES.jobs({ scheduledOnly: true }))
       setJobs(data)
     } catch (error) {
       toast({
@@ -85,7 +88,7 @@ export function ScriptList({ warehouseId }: ScriptListProps) {
           execution_status: string
         }>
       }>(
-        API_ROUTES.scriptLogs(scriptId) + '?skip=0&limit=1'
+        API_ROUTES.scriptLogs(scriptId, { skip: 0, limit: 1 })
       )
       
       if (response.items.length > 0) {
@@ -114,33 +117,75 @@ export function ScriptList({ warehouseId }: ScriptListProps) {
     }
   }
 
+  const checkScriptStatus = async (scriptId: number, executionId: number) => {
+    try {
+      const statusResponse = await apiClient.get<ScriptExecutionStatus>(
+        API_ROUTES.scriptExecutionStatus(executionId.toString())
+      )
+
+      if (statusResponse.status !== 'running') {
+        setRunningScripts(prev => {
+          const newSet = new Set(prev)
+          newSet.delete(scriptId)
+          return newSet
+        })
+
+        if (statusResponse.status === 'failed') {
+          toast({
+            title: 'Script Failed',
+            description: statusResponse.error_message || 'Script execution failed',
+            variant: 'destructive',
+          })
+        } else {
+          toast({
+            title: 'Success',
+            description: 'Script execution completed successfully',
+          })
+          updateScriptExecutionTime(scriptId)
+        }
+        
+        fetchJobs()
+        return true
+      }
+      return false
+    } catch (error) {
+      console.error('Failed to check script status:', error)
+      return false
+    }
+  }
+
   const handleRunNow = async (scriptId: number) => {
     try {
+      setRunningScripts(prev => {
+        const newSet = new Set(prev)
+        newSet.add(scriptId)
+        return newSet
+      })
+      
+      const response = await apiClient.post<RunScriptResponse>(
+        API_ROUTES.runScript(scriptId.toString())
+      )
+
       toast({
         title: 'Script Started',
         description: 'Script execution has begun',
       })
 
-      const response = await apiClient.post<RunScriptResponse>(
-        API_ROUTES.runScript(scriptId.toString())
-      )
-
-      // Add a longer delay to ensure the script has completed and logs are updated
-      setTimeout(() => {
-        updateScriptExecutionTime(scriptId)
+      // Start polling for status
+      const pollInterval = setInterval(async () => {
+        const isComplete = await checkScriptStatus(scriptId, response.execution_id)
+        if (isComplete) {
+          clearInterval(pollInterval)
+        }
       }, 3000)
 
-      if (response.status === 'completed') {
-        toast({
-          title: 'Success',
-          description: 'Script execution completed successfully',
-        })
-      } else if (response.status === 'failed') {
-        throw new Error(response.error || 'Script execution failed')
-      }
-
-      fetchJobs()
     } catch (error) {
+      setRunningScripts(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(scriptId)
+        return newSet
+      })
+      
       toast({
         title: 'Error',
         description:
@@ -152,7 +197,9 @@ export function ScriptList({ warehouseId }: ScriptListProps) {
 
   const handleToggleStatus = async (jobId: number) => {
     try {
-      await apiClient.post<{ success: boolean }>(API_ROUTES.toggleJob(jobId.toString()))
+      await apiClient.post<{ success: boolean }>(
+        API_ROUTES.toggleJob(jobId.toString())
+      )
       await fetchJobs()
       toast({
         title: 'Success',
@@ -162,9 +209,7 @@ export function ScriptList({ warehouseId }: ScriptListProps) {
       toast({
         title: 'Error',
         description:
-          error instanceof Error
-            ? error.message
-            : 'Failed to update job status',
+          error instanceof Error ? error.message : 'Failed to toggle job status',
         variant: 'destructive',
       })
     }
@@ -233,10 +278,18 @@ export function ScriptList({ warehouseId }: ScriptListProps) {
                           <TooltipTrigger asChild>
                             <Button
                               variant="outline"
-                              size="icon"
+                              size="sm"
                               onClick={() => handleRunNow(script.id)}
+                              disabled={runningScripts.has(script.id)}
                             >
-                              <Play className="h-4 w-4" />
+                              {runningScripts.has(script.id) ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Running...
+                                </>
+                              ) : (
+                                'Run Now'
+                              )}
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>Run script now</TooltipContent>
@@ -337,10 +390,18 @@ export function ScriptList({ warehouseId }: ScriptListProps) {
                           <TooltipTrigger asChild>
                             <Button
                               variant="outline"
-                              size="icon"
+                              size="sm"
                               onClick={() => handleRunNow(script.id)}
+                              disabled={runningScripts.has(script.id)}
                             >
-                              <Play className="h-4 w-4" />
+                              {runningScripts.has(script.id) ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Running...
+                                </>
+                              ) : (
+                                'Run Now'
+                              )}
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>Run script now</TooltipContent>
