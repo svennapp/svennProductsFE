@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -19,6 +19,21 @@ export default function HomePage() {
   const [selectedWarehouseId, setSelectedWarehouseId] = useState<WarehouseId | ''>('');
   const { warehouses, isLoading, error } = useWarehouses();
   const { toast } = useToast();
+
+  // Load selected warehouse from localStorage on mount
+  useEffect(() => {
+    const savedWarehouse = localStorage.getItem('selectedWarehouse');
+    if (savedWarehouse) {
+      setSelectedWarehouseId(Number(savedWarehouse));
+    }
+  }, []);
+
+  // Save selected warehouse to localStorage when it changes
+  useEffect(() => {
+    if (selectedWarehouseId) {
+      localStorage.setItem('selectedWarehouse', selectedWarehouseId.toString());
+    }
+  }, [selectedWarehouseId]);
 
   // Show error toast if warehouse fetch fails
   if (error) {

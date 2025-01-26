@@ -79,7 +79,26 @@ export function ScriptList({ warehouseId }: ScriptListProps) {
     }
   }
 
-  const updateScriptExecutionTime = async (scriptId: number) => {
+  const updateScriptExecutionTime = async (scriptId: number, timestamp: string, status: string) => {
+    // Optimistically update the script
+    mutateScripts(
+      scripts?.map(script => 
+        script.id === scriptId 
+          ? { 
+              ...script, 
+              last_execution_time: timestamp,
+              lastExecution: {
+                execution_id: 0, // Will be updated with real value
+                script_id: scriptId,
+                timestamp: timestamp,
+                status: status as 'pending' | 'completed' | 'failed'
+              }
+            }
+          : script
+      )
+    )
+
+    // Fetch actual data in background
     try {
       const response = await apiClient.get<{
         items: Array<{
@@ -92,21 +111,18 @@ export function ScriptList({ warehouseId }: ScriptListProps) {
       )
       
       if (response.items.length > 0) {
-        const lastExecution = {
-          execution_id: response.items[0].execution_id,
-          script_id: scriptId,
-          timestamp: response.items[0].timestamp,
-          status: response.items[0].execution_status as 'pending' | 'completed' | 'failed'
-        }
-
-        // Update the specific script with new execution time and lastExecution
         mutateScripts(
           scripts?.map(script => 
             script.id === scriptId 
               ? { 
                   ...script, 
                   last_execution_time: response.items[0].timestamp,
-                  lastExecution
+                  lastExecution: {
+                    execution_id: response.items[0].execution_id,
+                    script_id: scriptId,
+                    timestamp: response.items[0].timestamp,
+                    status: response.items[0].execution_status as 'pending' | 'completed' | 'failed'
+                  }
                 }
               : script
           )
@@ -124,6 +140,10 @@ export function ScriptList({ warehouseId }: ScriptListProps) {
       )
 
       if (statusResponse.status !== 'running') {
+        // Store current scroll position
+        const scrollPosition = window.scrollY
+
+        // Update running scripts state
         setRunningScripts(prev => {
           const newSet = new Set(prev)
           newSet.delete(scriptId)
@@ -141,10 +161,21 @@ export function ScriptList({ warehouseId }: ScriptListProps) {
             title: 'Success',
             description: 'Script execution completed successfully',
           })
-          updateScriptExecutionTime(scriptId)
+
+          // Optimistically update the script execution time
+          updateScriptExecutionTime(
+            scriptId, 
+            statusResponse.end_time || new Date().toISOString(),
+            'completed'
+          )
         }
+
+        // Restore scroll position
+        window.scrollTo({
+          top: scrollPosition,
+          behavior: 'instant'
+        })
         
-        fetchJobs()
         return true
       }
       return false
