@@ -131,8 +131,12 @@ export function ScheduleModal({
     try {
       // If we have an existing job, update it. Otherwise, create a new one.
       const method = job ? 'PUT' : 'POST'
-      const url = job ? `${API_ROUTES.jobs}/${job.id}` : API_ROUTES.jobs
+      const url = job
+        ? `${API_ROUTES.jobs()}/${job.id}`
+        : API_ROUTES.jobs()
 
+      // For updates, only send cron_expression
+      // For new jobs, send script_id and cron_expression
       const body = job
         ? { cron_expression: customSchedule }
         : {

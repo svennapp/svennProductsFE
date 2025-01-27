@@ -354,6 +354,8 @@ export function ScriptList({ warehouseId }: ScriptListProps) {
                               size="icon"
                               onClick={() => {
                                 setSelectedScript(script)
+                                const existingJob = findScheduledJob(jobs, script.id)
+                                setSelectedScript({ ...script, job: existingJob })
                                 setShowScheduleModal(true)
                               }}
                             >
@@ -466,6 +468,8 @@ export function ScriptList({ warehouseId }: ScriptListProps) {
                               size="icon"
                               onClick={() => {
                                 setSelectedScript(script)
+                                const existingJob = findScheduledJob(jobs, script.id)
+                                setSelectedScript({ ...script, job: existingJob })
                                 setShowScheduleModal(true)
                               }}
                             >
@@ -502,6 +506,7 @@ export function ScriptList({ warehouseId }: ScriptListProps) {
       {selectedScript && (
         <ScheduleModal
           script={selectedScript}
+          job={selectedScript.job}
           open={showScheduleModal}
           onOpenChange={setShowScheduleModal}
           onSchedule={fetchJobs}
