@@ -98,7 +98,6 @@ export function ScriptList({ warehouseId }: ScriptListProps) {
       )
     )
 
-    // Fetch actual data in background
     try {
       const response = await apiClient.get<{
         items: Array<{
