@@ -76,6 +76,7 @@ export interface Product {
   base_name: string
   base_unit: string
   base_price_unit: string
+  ean?: string
   created: string
   updated: string
   images: ProductImage[]
@@ -86,6 +87,8 @@ export interface RetailerProduct {
   product_id: number
   retailer_name: string
   product_url?: string
+  url_product?: string
+  variant_name: string
   price: number
   currency: string
   last_updated: string
@@ -141,7 +144,9 @@ export interface LatestProduct {
   base_name: string
   base_unit: string
   nobb_code: string
+  ean_code?: string
   updated: string
   images: ProductImage[]
   retailer: RetailerInfo
+  retailer_count: number
 }

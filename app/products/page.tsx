@@ -76,6 +76,11 @@ export default function ProductsPage() {
                           className="hover:bg-accent cursor-pointer"
                           onClick={() => setSelectedNobbCode(product.nobb_code)}
                         >
+                          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">
+                              {product.base_name}
+                            </CardTitle>
+                          </CardHeader>
                           <CardContent className="p-4">
                             <div className="flex gap-4">
                               {product.images[0] && (
@@ -86,21 +91,12 @@ export default function ProductsPage() {
                                 />
                               )}
                               <div className="flex-1">
-                                <h3 className="font-medium">
-                                  {product.base_name}
-                                </h3>
                                 <p className="text-sm text-muted-foreground">
-                                  {product.base_unit}
+                                  Updated: {format(new Date(product.updated), 'PPp')}
                                 </p>
-                                <div className="mt-2 text-xs text-muted-foreground">
-                                  <p>
-                                    Updated:{' '}
-                                    {format(new Date(product.updated), 'PPp')}
-                                  </p>
-                                  <p>
-                                    Retailer: {product.retailer.retailer_name} -{' '}
-                                    {product.retailer.variant_name}
-                                  </p>
+                                <div className="mt-1 text-sm text-muted-foreground">
+                                  <p>Unit: {product.base_unit || 'N/A'}</p>
+                                  <p>NOBB: {product.nobb_code || 'N/A'} {product.ean_code ? `/ EAN: ${product.ean_code}` : ''}</p>
                                 </div>
                               </div>
                             </div>

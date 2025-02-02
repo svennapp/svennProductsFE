@@ -16,6 +16,7 @@ interface SearchResult {
   ean_code: string | null
   images: Array<{ image_id: number; image_url: string }>
   retailer_count: number
+  updated: string
 }
 
 interface SearchResponse {
@@ -92,15 +93,12 @@ export default function ProductSearch({
                     )}
                     <div className="flex-1">
                       <h3 className="font-medium">{item.base_name}</h3>
-                      {item.base_unit && (
-                        <p className="text-sm text-muted-foreground">
-                          Unit: {item.base_unit}
-                        </p>
-                      )}
-                      <div className="mt-2 text-xs text-muted-foreground">
-                        <p>NOBB: {item.nobb_code || 'N/A'}</p>
-                        <p>EAN: {item.ean_code || 'N/A'}</p>
-                        <p>Available at {item.retailer_count} retailers</p>
+                      <p className="text-sm text-muted-foreground">
+                        Available at {item.retailer_count} retailers
+                      </p>
+                      <div className="mt-1 text-sm text-muted-foreground">
+                        <p>Unit: {item.base_unit || 'N/A'}</p>
+                        <p>NOBB: {item.nobb_code || 'N/A'} {item.ean_code ? `/ EAN: ${item.ean_code}` : ''}</p>
                       </div>
                     </div>
                   </div>
