@@ -36,13 +36,15 @@ export default function HomePage() {
   }, [selectedWarehouseId]);
 
   // Show error toast if warehouse fetch fails
-  if (error) {
-    toast({
-      title: "Error",
-      description: error,
-      variant: "destructive",
-    });
-  }
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive",
+      });
+    }
+  }, [error, toast]);
 
   const selectedWarehouse = warehouses.find(w => w.id === selectedWarehouseId);
 

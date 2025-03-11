@@ -56,7 +56,7 @@ export function PriceComparison({ data }: PriceComparisonProps) {
               <img
                 src={data.product.images[0].image_url}
                 alt={data.product.base_name}
-                className="w-32 h-32 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                className="w-14 h-14 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
                 onClick={() => handleImageClick(0)}
               />
             )}
@@ -72,7 +72,7 @@ export function PriceComparison({ data }: PriceComparisonProps) {
           <div className="flex justify-between items-center">
             <div>
               <p className="text-sm font-medium">Median Price</p>
-              <p className="text-2xl font-bold">
+              <p className="text-lg font-bold">
                 {formatPrice(data.median_price_all_retailers)} / {data.product.base_unit}
               </p>
             </div>

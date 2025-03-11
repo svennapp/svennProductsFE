@@ -9,11 +9,17 @@ import {
   getBasicStats,
 } from '@/lib/api/products'
 import { useQuery } from '@tanstack/react-query'
-import { Loader2, Package2, Store } from 'lucide-react'
+import { Loader2, Package2, ChevronDown } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { format } from 'date-fns'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
+import { Button } from "@/components/ui/button"
 
 export default function ProductsPage() {
   const [selectedNobbCode, setSelectedNobbCode] = useState<string | null>(null)
@@ -43,12 +49,12 @@ export default function ProductsPage() {
   })
 
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-4xl font-bold mb-8">Product Price Comparison</h1>
+    <div className="container mx-auto py-2">
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Left Column - Search & Products */}
         <div className="space-y-8">
+        <h1 className="text-2xl font-bold mb-8">Product Price Comparison</h1>
           <Tabs defaultValue="search" className="w-full">
             <TabsList>
               <TabsTrigger value="search">Search Products</TabsTrigger>
@@ -114,52 +120,69 @@ export default function ProductsPage() {
         {/* Right Column - Product Info & Price Comparison */}
         <div className="space-y-8">
           {/* Product Info Card */}
-          <Card className="bg-white">
-            <CardHeader></CardHeader>
-            <CardContent>
-              {isLoadingStats ? (
-                <div className="flex items-center justify-center p-4">
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Package2 className="h-5 w-5 text-muted-foreground" />
-                    <span className="text-muted-foreground">
-                      Total Products:
-                    </span>
-                    <span className="font-bold">
-                      {stats?.total_products.toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="font-medium text-muted-foreground">
-                      Products per retailer:
+          <Collapsible>
+            <div>
+              <div className="pb-0">
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" className="w-full flex justify-between items-center px-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg font-semibold">Total Products</span>
+                      {!isLoadingStats && (
+                        <span className="text-muted-foreground">
+                          ({stats?.total_products.toLocaleString()})
+                        </span>
+                      )}
                     </div>
-                    <div className="grid gap-2">
-                      {stats?.retailer_product_counts.map((retailer) => (
-                        <div
-                          key={retailer.retailer_id}
-                          className="flex justify-between items-center text-sm border-b last:border-0 pb-2 last:pb-0"
-                        >
-                          <span className="font-medium">
-                            {retailer.retailer_name}
-                          </span>
-                          <span className="text-muted-foreground">
-                            {retailer.total_products.toLocaleString()} products
-                          </span>
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </CollapsibleTrigger>
+              </div>
+              <CollapsibleContent>
+                <div className="pt-4">
+                  {isLoadingStats ? (
+                    <div className="flex items-center justify-center p-4">
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2">
+                        <Package2 className="h-5 w-5 text-muted-foreground" />
+                        <span className="text-muted-foreground">
+                          Total Products:
+                        </span>
+                        <span className="font-bold">
+                          {stats?.total_products.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="font-medium text-muted-foreground">
+                          Products per retailer:
                         </div>
-                      ))}
+                        <div className="grid gap-2">
+                          {stats?.retailer_product_counts.map((retailer) => (
+                            <div
+                              key={retailer.retailer_id}
+                              className="flex justify-between items-center text-sm border-b last:border-0 pb-2 last:pb-0"
+                            >
+                              <span className="font-medium">
+                                {retailer.retailer_name}
+                              </span>
+                              <span className="text-muted-foreground">
+                                {retailer.total_products.toLocaleString()} products
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </CollapsibleContent>
+            </div>
+          </Collapsible>
 
           {/* Price Comparison */}
           <div>
-            <h2 className="text-2xl font-semibold mb-4">Price Comparison</h2>
             {isLoadingPrices ? (
               <div className="flex items-center justify-center p-8">
                 <Loader2 className="h-8 w-8 animate-spin" />
