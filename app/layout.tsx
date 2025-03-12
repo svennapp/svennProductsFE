@@ -4,7 +4,7 @@ import { Inter } from 'next/font/google'
 import { Toaster } from '@/components/ui/toaster'
 import AuthProvider from '@/components/providers/session-provider'
 import { Navigation } from '@/components/navigation'
-import { Providers } from './providers' // Make sure this is imported
+import { Providers } from './providers'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -24,8 +24,7 @@ export default function RootLayout({
         <Providers>
           <AuthProvider>
             <div className="min-h-screen bg-background">
-              <Navigation />
-              <main className="container mx-auto py-6">{children}</main>
+              <Navigation>{children}</Navigation>
             </div>
             <Toaster />
           </AuthProvider>
