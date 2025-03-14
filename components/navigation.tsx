@@ -19,10 +19,6 @@ import {
 
 export function Navigation({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const isAuthPage =
-    pathname?.startsWith('/login') || pathname?.startsWith('/signup')
-
-  if (isAuthPage) return null
   
   // Extract the current page name from pathname
   const getPageName = () => {

@@ -28,7 +28,20 @@ import {
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
 
-const navigation = [
+interface NavItem {
+  title: string
+  url: string
+  icon: React.ComponentType
+  items: SubNavItem[]
+  isActive?: boolean
+}
+
+interface SubNavItem {
+  title: string
+  url: string
+}
+
+const navigation: NavItem[] = [
   { 
     title: 'Scripts', 
     url: '/', 
@@ -57,7 +70,7 @@ export function MainNav() {
     try {
       await signOut({
         redirect: true,
-        callbackUrl: '/login',
+        callbackUrl: '/',
       })
     } catch (error) {
       console.error('Logout failed:', error)
@@ -90,7 +103,7 @@ export function MainNav() {
               {item.items && item.items.length > 0 && (
                 <CollapsibleContent>
                   <SidebarMenuSub>
-                    {item.items?.map((subItem) => (
+                    {item.items.map((subItem) => (
                       <SidebarMenuSubItem key={subItem.title}>
                         <SidebarMenuSubButton asChild>
                           <Link href={subItem.url}>

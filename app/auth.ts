@@ -19,9 +19,6 @@ declare module 'next-auth/jwt' {
 }
 
 export const authOptions: AuthOptions = {
-  pages: {
-    signIn: '/login',
-  },
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
