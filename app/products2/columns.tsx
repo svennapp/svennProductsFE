@@ -12,15 +12,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-// Define the product type based on your existing data structure
+// Define the product type based on the search API response
 export type Product = {
-  id: string
-  nobb_code: string
+  product_id: number
   base_name: string
   base_unit: string
-  ean_code?: string
-  images?: Array<{ image_url: string }>
-  updated: string
+  nobb_code: string
+  ean_code: string | null
+  images: Array<{
+    image_id: number
+    image_url: string
+  }>
+  retailer_count: number
   median_price_all_retailers?: number
 }
 
@@ -82,6 +85,24 @@ export const columns: ColumnDef<Product>[] = [
         : "N/A"
 
       return <div className="text-right font-medium">{formatted}</div>
+    },
+  },
+  {
+    accessorKey: "retailer_count",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Retailers
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      )
+    },
+    cell: ({ row }) => {
+      const count = row.getValue("retailer_count") as number
+      return <div className="text-center">{count}</div>
     },
   },
   {
