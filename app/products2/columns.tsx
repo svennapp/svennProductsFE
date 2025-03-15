@@ -109,10 +109,6 @@ export const columns: ColumnDef<Product>[] = [
     },
   },
   {
-    accessorKey: "base_unit",
-    header: "Unit",
-  },
-  {
     accessorKey: "median_price_all_retailers",
     header: ({ column }) => {
       return (
@@ -127,6 +123,7 @@ export const columns: ColumnDef<Product>[] = [
     },
     cell: ({ row }) => {
       const price = row.getValue("median_price_all_retailers") as number
+      const product = row.original
       
       // Format the price as NOK currency
       const formatted = price 
@@ -136,7 +133,12 @@ export const columns: ColumnDef<Product>[] = [
           }).format(price)
         : "N/A"
 
-      return <div className="text-right font-medium">{formatted}</div>
+      // Add the unit to the price display
+      const priceWithUnit = price 
+        ? `${formatted} /${product.base_unit}`
+        : "N/A"
+
+      return <div className="text-right font-medium">{priceWithUnit}</div>
     },
   },
   {
@@ -153,8 +155,7 @@ export const columns: ColumnDef<Product>[] = [
       )
     },
     cell: ({ row }) => {
-      const count = row.getValue("retailer_count") as number
-      return <div className="text-center">{count}</div>
+      return <div className="text-center">{row.getValue("retailer_count")}</div>
     },
   },
   {
@@ -173,14 +174,13 @@ export const columns: ColumnDef<Product>[] = [
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(product.nobb_code)}
+              onClick={() => navigator.clipboard.writeText(product.product_id.toString())}
             >
-              Copy NOBB code
+              Copy product ID
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => window.open(`/products?nobb=${product.nobb_code}`, '_blank')}>
-              View details
-            </DropdownMenuItem>
+            <DropdownMenuItem>View details</DropdownMenuItem>
+            <DropdownMenuItem>View retailers</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
