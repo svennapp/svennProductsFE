@@ -101,6 +101,14 @@ export const columns: ColumnDef<Product>[] = [
     },
   },
   {
+    accessorKey: "ean_code",
+    header: "EAN",
+    cell: ({ row }) => {
+      const eanCode = row.getValue("ean_code") as string | null
+      return <div>{eanCode || "—"}</div>
+    },
+  },
+  {
     accessorKey: "base_unit",
     header: "Unit",
   },
