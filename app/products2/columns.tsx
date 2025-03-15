@@ -1,7 +1,7 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
-import { ArrowUpDown, MoreHorizontal } from "lucide-react"
+import { ArrowUpDown, MoreHorizontal, ImageOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -11,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import Image from "next/image"
 
 // Define the product type based on the search API response
 export type Product = {
@@ -28,6 +29,49 @@ export type Product = {
 }
 
 export const columns: ColumnDef<Product>[] = [
+  {
+    id: "thumbnail",
+    header: "Image",
+    cell: ({ row }) => {
+      const product = row.original
+      const imageUrl = product.images && product.images.length > 0
+        ? product.images[0].image_url
+        : null
+
+      return (
+        <div className="flex items-center justify-center h-12 w-12 relative">
+          {imageUrl ? (
+            <div className="relative h-10 w-10 overflow-hidden rounded-md border">
+              <Image
+                src={imageUrl}
+                alt={product.base_name}
+                fill
+                sizes="40px"
+                className="object-cover"
+                onError={(e) => {
+                  // Show fallback on error
+                  e.currentTarget.style.display = 'none'
+                  const parent = e.currentTarget.parentElement
+                  if (parent) {
+                    const fallback = document.createElement('div')
+                    fallback.className = 'flex items-center justify-center h-full w-full bg-muted'
+                    const icon = document.createElement('span')
+                    icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground"><line x1="2" y1="2" x2="22" y2="22"></line><path d="M10.41 10.41a2 2 0 1 1-2.83-2.83"></path><line x1="13.5" y1="13.5" x2="6" y2="21"></line><line x1="18" y1="12" x2="21" y2="15"></line><path d="M3.59 3.59A1.99 1.99 0 0 0 3 5v14a2 2 0 0 0 2 2h14c.55 0 1.052-.22 1.41-.59"></path><path d="M21 15V5a2 2 0 0 0-2-2H9"></path></svg>'
+                    fallback.appendChild(icon)
+                    parent.appendChild(fallback)
+                  }
+                }}
+              />
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-10 w-10 rounded-md border bg-muted">
+              <ImageOff className="h-5 w-5 text-muted-foreground" />
+            </div>
+          )}
+        </div>
+      )
+    },
+  },
   {
     accessorKey: "base_name",
     header: ({ column }) => {
