@@ -21,7 +21,10 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Loader2, Search, AlertCircle } from "lucide-react"
+import { Loader2, Search, AlertCircle, X } from "lucide-react"
+
+import { Product } from "./columns"
+import { ProductDetailsModal } from "./product-details-modal"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -55,6 +58,10 @@ export function DataTable<TData, TValue>({
   const [searchError, setSearchError] = useState<string | null>(null)
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
+  
+  // State for product details modal
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
   
   // Minimum search length required
   const MIN_SEARCH_LENGTH = 2
@@ -96,6 +103,30 @@ export function DataTable<TData, TValue>({
       onSearchChange(newValue)
       setIsSearching(false)
     }, 500) // 500ms debounce
+  }
+  
+  // Clear search function
+  const handleClearSearch = () => {
+    setSearchValue("")
+    setSearchError(null)
+    onSearchChange("")
+    setIsSearching(false)
+    
+    // Focus the input after clearing
+    if (searchInputRef.current) {
+      searchInputRef.current.focus()
+    }
+  }
+  
+  // Handle row click to open product details
+  const handleRowClick = (product: Product) => {
+    setSelectedProduct(product)
+    setIsModalOpen(true)
+  }
+  
+  // Close modal function
+  const handleCloseModal = () => {
+    setIsModalOpen(false)
   }
   
   // Clean up timeout on unmount
@@ -167,13 +198,19 @@ export function DataTable<TData, TValue>({
               }
             }}
           />
-          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+          <div className="absolute inset-y-0 right-0 flex items-center pr-3">
             {isSearching || isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground pointer-events-none" />
             ) : searchError ? (
-              <AlertCircle className="h-4 w-4 text-destructive" />
+              <AlertCircle className="h-4 w-4 text-destructive pointer-events-none" />
+            ) : searchValue ? (
+              <X 
+                className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-pointer" 
+                onClick={handleClearSearch}
+                aria-label="Clear search"
+              />
             ) : (
-              <Search className="h-4 w-4 text-muted-foreground" />
+              <Search className="h-4 w-4 text-muted-foreground pointer-events-none" />
             )}
           </div>
           {searchError && (
@@ -200,18 +237,16 @@ export function DataTable<TData, TValue>({
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  )
-                })}
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id}>
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                  </TableHead>
+                ))}
               </TableRow>
             ))}
           </TableHeader>
@@ -219,17 +254,17 @@ export function DataTable<TData, TValue>({
             {isLoading ? (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  <div className="flex justify-center items-center">
-                    <Loader2 className="h-6 w-6 animate-spin mr-2" />
-                    <span>Loading products...</span>
-                  </div>
+                  <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                  <div className="mt-2">Loading products...</div>
                 </TableCell>
               </TableRow>
-            ) : data.length > 0 ? (
+            ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleRowClick(row.original as Product)}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
@@ -241,14 +276,7 @@ export function DataTable<TData, TValue>({
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  {searchValue && searchValue.length < MIN_SEARCH_LENGTH ? (
-                    <div className="flex flex-col items-center justify-center">
-                      <AlertCircle className="h-6 w-6 text-amber-500 mb-2" />
-                      <span>Enter at least {MIN_SEARCH_LENGTH} characters to search</span>
-                    </div>
-                  ) : (
-                    "No results found."
-                  )}
+                  {searchValue ? "No products found matching your search." : "No products available."}
                 </TableCell>
               </TableRow>
             )}
@@ -261,7 +289,7 @@ export function DataTable<TData, TValue>({
             variant="outline"
             size="sm"
             onClick={() => onPaginationChange(0, pageSize)}
-            disabled={pageIndex === 0 || isLoading || isSearching}
+            disabled={pageIndex === 0 || isLoading}
           >
             First
           </Button>
@@ -269,25 +297,34 @@ export function DataTable<TData, TValue>({
             variant="outline"
             size="sm"
             onClick={() => onPaginationChange(pageIndex - 1, pageSize)}
-            disabled={pageIndex === 0 || isLoading || isSearching}
+            disabled={pageIndex === 0 || isLoading}
           >
             Previous
           </Button>
         </div>
         <div className="flex items-center space-x-2">
-          <span className="text-sm text-muted-foreground">
+          <div className="text-sm text-muted-foreground">
             Page {pageIndex + 1} of {Math.max(1, pageCount)}
-          </span>
-          {(isLoading || isSearching) && (
-            <Loader2 className="h-4 w-4 animate-spin ml-2" />
-          )}
+          </div>
+          <select
+            className="border rounded p-1 text-sm"
+            value={pageSize}
+            onChange={(e) => onPaginationChange(0, Number(e.target.value))}
+            disabled={isLoading}
+          >
+            {[10, 20, 30, 40, 50].map((size) => (
+              <option key={size} value={size}>
+                {size} per page
+              </option>
+            ))}
+          </select>
         </div>
         <div className="flex items-center space-x-2">
           <Button
             variant="outline"
             size="sm"
             onClick={() => onPaginationChange(pageIndex + 1, pageSize)}
-            disabled={pageIndex >= pageCount - 1 || isLoading || isSearching}
+            disabled={pageIndex >= pageCount - 1 || isLoading}
           >
             Next
           </Button>
@@ -295,12 +332,19 @@ export function DataTable<TData, TValue>({
             variant="outline"
             size="sm"
             onClick={() => onPaginationChange(pageCount - 1, pageSize)}
-            disabled={pageIndex >= pageCount - 1 || isLoading || isSearching}
+            disabled={pageIndex >= pageCount - 1 || isLoading}
           >
             Last
           </Button>
         </div>
       </div>
+      
+      {/* Product Details Modal */}
+      <ProductDetailsModal 
+        product={selectedProduct}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+      />
     </div>
   )
 }
