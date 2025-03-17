@@ -1,205 +1,201 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import ProductSearch from '@/components/products/product-search'
-import { PriceComparison } from '@/components/products/price-comparison'
-import {
-  getProductPrices,
-  getLatestProducts,
-  getBasicStats,
-} from '@/lib/api/products'
+import { useReducer, useEffect, useCallback } from 'react'
+import { SortingState } from '@tanstack/react-table'
 import { useQuery } from '@tanstack/react-query'
-import { Loader2, Package2, ChevronDown } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { format } from 'date-fns'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible"
-import { Button } from "@/components/ui/button"
+
+import { columns } from './columns'
+import { DataTable } from './data-table'
+import { ProductStatsPopover } from './product-stats-popover'
+import { searchProducts, SortField, SortOrder } from '@/lib/api/product-search'
+
+// Define the state type
+type TableState = {
+  pageIndex: number;
+  pageSize: number;
+  sortingState: SortingState;
+  searchTerm: string;
+}
+
+// Define action types
+type TableAction = 
+  | { type: 'SET_PAGE_INDEX'; payload: number }
+  | { type: 'SET_PAGE_SIZE'; payload: number }
+  | { type: 'SET_SORTING'; payload: SortingState }
+  | { type: 'SET_SEARCH_TERM'; payload: string }
+  | { type: 'RESET_PAGINATION' };
+
+// Reducer function
+function tableReducer(state: TableState, action: TableAction): TableState {
+  switch (action.type) {
+    case 'SET_PAGE_INDEX':
+      return { ...state, pageIndex: action.payload };
+    case 'SET_PAGE_SIZE':
+      return { ...state, pageSize: action.payload, pageIndex: 0 };
+    case 'SET_SORTING':
+      return { ...state, sortingState: action.payload, pageIndex: 0 };
+    case 'SET_SEARCH_TERM':
+      return { ...state, searchTerm: action.payload, pageIndex: 0 };
+    case 'RESET_PAGINATION':
+      return { ...state, pageIndex: 0 };
+    default:
+      return state;
+  }
+}
+
+// Minimum search length required (must match the value in data-table.tsx)
+const MIN_SEARCH_LENGTH = 2;
 
 export default function ProductsPage() {
-  const [selectedNobbCode, setSelectedNobbCode] = useState<string | null>(null)
+  // Initial state
+  const initialState: TableState = {
+    pageIndex: 0,
+    pageSize: 20,
+    sortingState: [],
+    searchTerm: "",
+  };
 
-  const { data: stats, isLoading: isLoadingStats } = useQuery({
-    queryKey: ['basic-stats'],
-    queryFn: getBasicStats,
-  })
+  // Use reducer for state management
+  const [state, dispatch] = useReducer(tableReducer, initialState);
+  const { pageIndex, pageSize, sortingState, searchTerm } = state;
 
+  // Calculate offset from page index
+  const offset = pageIndex * pageSize;
+
+  // Convert TanStack Table sorting to API sorting parameters
+  const getSortParams = useCallback((): { sort_by?: SortField; sort_order?: SortOrder } => {
+    if (sortingState.length === 0) return {};
+
+    const column = sortingState[0].id;
+    const direction = sortingState[0].desc ? "desc" : "asc";
+
+    // Map column IDs to API sort fields
+    const sortFieldMap: Record<string, SortField> = {
+      base_name: "name",
+      median_price_all_retailers: "price",
+      retailer_count: "retailer_count",
+    };
+
+    const sortField = sortFieldMap[column];
+    if (!sortField) return {};
+
+    return {
+      sort_by: sortField,
+      sort_order: direction,
+    };
+  }, [sortingState]);
+
+  // Determine if we should fetch data based on search term
+  const shouldFetch = !searchTerm || searchTerm.length >= MIN_SEARCH_LENGTH;
+
+  // Fetch products with the search API
   const {
-    data: latestProducts,
-    isLoading: isLoadingProducts,
-    error: productsError,
+    data: searchResults,
+    isLoading,
+    isError,
+    error,
+    isFetching,
   } = useQuery({
-    queryKey: ['latest-products'],
-    queryFn: () => getLatestProducts(0, 20),
-  })
+    queryKey: ["products-search-v2", pageIndex, pageSize, sortingState, searchTerm],
+    queryFn: async () => {
+      if (searchTerm && searchTerm.length < MIN_SEARCH_LENGTH) {
+        // Return empty results if search term is too short
+        return {
+          items: [],
+          total: 0,
+          limit: pageSize,
+          offset: 0,
+          has_more: false
+        };
+      }
+      
+      const { sort_by, sort_order } = getSortParams();
+      console.log("Fetching data for page:", pageIndex, "with offset:", offset);
+      
+      return searchProducts({
+        q: searchTerm || undefined, // Only send if not empty
+        limit: pageSize,
+        offset: offset,
+        sort_by,
+        sort_order,
+      });
+    },
+    enabled: shouldFetch, // Only run query if search term is valid
+    refetchOnWindowFocus: false,
+  });
 
-  const {
-    data: priceStats,
-    isLoading: isLoadingPrices,
-    error: pricesError,
-  } = useQuery({
-    queryKey: ['prices', selectedNobbCode],
-    queryFn: () => getProductPrices(selectedNobbCode!),
-    enabled: !!selectedNobbCode,
-  })
+  // Handle pagination changes
+  const handlePaginationChange = useCallback((newPageIndex: number, newPageSize: number) => {
+    console.log("Pagination change:", { newPageIndex, newPageSize, currentPageIndex: pageIndex });
+    
+    // If page size changes, reset to first page
+    if (newPageSize !== pageSize) {
+      dispatch({ type: 'SET_PAGE_SIZE', payload: newPageSize });
+    } else {
+      dispatch({ type: 'SET_PAGE_INDEX', payload: newPageIndex });
+    }
+  }, [pageIndex, pageSize]);
 
-  const content = (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      {/* Left Column - Search & Products */}
-      <div className="space-y-8">
-        <h1 className="text-2xl font-bold mb-8">Product Price Comparison</h1>
-        <Tabs defaultValue="search" className="w-full">
-          <TabsList>
-            <TabsTrigger value="search">Search Products</TabsTrigger>
-            <TabsTrigger value="latest">Latest Updates</TabsTrigger>
-          </TabsList>
-          <TabsContent value="search" className="mt-6">
-            <ProductSearch onSelect={setSelectedNobbCode} />
-          </TabsContent>
-          <TabsContent value="latest" className="mt-6">
-            {isLoadingProducts ? (
-              <div className="flex items-center justify-center p-8">
-                <Loader2 className="h-8 w-8 animate-spin" />
-              </div>
-            ) : productsError ? (
-              <div className="text-destructive p-4">
-                Failed to load products. Please try again.
-              </div>
-            ) : (
-              <ScrollArea className="h-[800px] rounded-md border">
-                <div className="p-4">
-                  <div className="grid gap-4">
-                    {latestProducts?.data.map((product) => (
-                      <Card
-                        key={product.nobb_code}
-                        className="hover:bg-accent cursor-pointer"
-                        onClick={() => setSelectedNobbCode(product.nobb_code)}
-                      >
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                          <CardTitle className="text-sm font-medium">
-                            {product.base_name}
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-4">
-                          <div className="flex gap-4">
-                            {product.images[0] && (
-                              <img
-                                src={product.images[0].image_url}
-                                alt={product.base_name}
-                                className="w-20 h-20 object-cover rounded"
-                              />
-                            )}
-                            <div className="flex-1">
-                              <p className="text-sm text-muted-foreground">
-                                Updated: {format(new Date(product.updated), 'PPp')}
-                              </p>
-                              <div className="mt-1 text-sm text-muted-foreground">
-                                <p>Unit: {product.base_unit || 'N/A'}</p>
-                                <p>NOBB: {product.nobb_code || 'N/A'} {product.ean_code ? `/ EAN: ${product.ean_code}` : ''}</p>
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              </ScrollArea>
-            )}
-          </TabsContent>
-        </Tabs>
-      </div>
+  // Handle sorting changes
+  const handleSortingChange = useCallback((newSorting: SortingState) => {
+    dispatch({ type: 'SET_SORTING', payload: newSorting });
+  }, []);
 
-      {/* Right Column - Product Info & Price Comparison */}
-      <div className="space-y-8">
-        {/* Product Info Card */}
-        <Collapsible>
-          <div>
-            <div className="pb-0">
-              <CollapsibleTrigger asChild>
-                <Button variant="ghost" className="w-full flex justify-between items-center px-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg font-semibold">Total Products</span>
-                    {!isLoadingStats && (
-                      <span className="text-muted-foreground">
-                        ({stats?.total_products.toLocaleString()})
-                      </span>
-                    )}
-                  </div>
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </CollapsibleTrigger>
-            </div>
-            <CollapsibleContent>
-              <div className="pt-4">
-                {isLoadingStats ? (
-                  <div className="flex items-center justify-center p-4">
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <Package2 className="h-5 w-5 text-muted-foreground" />
-                      <span className="text-muted-foreground">
-                        Total Products:
-                      </span>
-                      <span className="font-bold">
-                        {stats?.total_products.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="font-medium text-muted-foreground">
-                        Products per retailer:
-                      </div>
-                      <div className="grid gap-2">
-                        {stats?.retailer_product_counts.map((retailer) => (
-                          <div
-                            key={retailer.retailer_id}
-                            className="flex justify-between items-center text-sm border-b last:border-0 pb-2 last:pb-0"
-                          >
-                            <span className="font-medium">
-                              {retailer.retailer_name}
-                            </span>
-                            <span className="text-muted-foreground">
-                              {retailer.total_products.toLocaleString()} products
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </CollapsibleContent>
-          </div>
-        </Collapsible>
+  // Handle search changes
+  const handleSearchChange = useCallback((newSearchTerm: string) => {
+    dispatch({ type: 'SET_SEARCH_TERM', payload: newSearchTerm });
+  }, []);
 
-        {/* Price Comparison */}
-        <div>
-          {isLoadingPrices ? (
-            <div className="flex items-center justify-center p-8">
-              <Loader2 className="h-8 w-8 animate-spin" />
-            </div>
-          ) : pricesError ? (
-            <div className="text-destructive p-4">
-              Failed to load price information. Please try again.
-            </div>
-          ) : priceStats?.data ? (
-            <PriceComparison data={priceStats.data} />
-          ) : (
-            <div className="text-muted-foreground p-4">
-              Select a product to view price comparison
-            </div>
-          )}
+  // Calculate page count
+  const pageCount = searchResults
+    ? Math.ceil(searchResults.total / pageSize)
+    : 0;
+
+  // For debugging
+  useEffect(() => {
+    console.log("Page component state:", { 
+      pageIndex, 
+      offset,
+      isLoading, 
+      isFetching,
+      dataReceived: !!searchResults,
+      itemCount: searchResults?.items?.length || 0,
+      searchTerm,
+      searchTermLength: searchTerm?.length || 0,
+      shouldFetch
+    });
+  }, [pageIndex, offset, isLoading, isFetching, searchResults, searchTerm, shouldFetch]);
+
+  // Display error message if API request fails
+  if (isError && shouldFetch) {
+    return (
+      <div className="container mx-auto py-10">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+          <strong className="font-bold">Error: </strong>
+          <span className="block sm:inline">{(error as Error).message || "Failed to load products"}</span>
         </div>
       </div>
-    </div>
-  )
+    );
+  }
 
-  return content
+  return (
+    <div className="container mx-auto py-10">
+      <div className="flex items-center mb-5">
+        <h1 className="text-2xl font-bold">Products</h1>
+        <ProductStatsPopover />
+      </div>
+      <DataTable
+        columns={columns}
+        data={searchResults?.items || []}
+        pageCount={pageCount}
+        pageIndex={pageIndex}
+        pageSize={pageSize}
+        totalItems={searchResults?.total || 0}
+        onPaginationChange={handlePaginationChange}
+        onSortingChange={handleSortingChange}
+        onSearchChange={handleSearchChange}
+        isLoading={isLoading || isFetching}
+      />
+    </div>
+  );
 }
