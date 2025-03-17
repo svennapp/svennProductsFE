@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query'
 
 import { columns } from './columns'
 import { DataTable } from './data-table'
+import { ProductStatsPopover } from './product-stats-popover'
 import { searchProducts, SortField, SortOrder } from '@/lib/api/product-search'
 
 // Define the state type
@@ -179,7 +180,10 @@ export default function Products2Page() {
 
   return (
     <div className="container mx-auto py-10">
-      <h1 className="text-2xl font-bold mb-5">Products</h1>
+      <div className="flex items-center mb-5">
+        <h1 className="text-2xl font-bold">Products</h1>
+        <ProductStatsPopover />
+      </div>
       <DataTable
         columns={columns}
         data={searchResults?.items || []}
