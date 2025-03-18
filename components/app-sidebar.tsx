@@ -44,10 +44,6 @@ const data = {
           title: "View Products",
           url: "/products",
         },
-        {
-          title: "Search Products",
-          url: "/products2",
-        },
       ],
     },
     {

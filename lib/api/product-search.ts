@@ -1,6 +1,6 @@
 // lib/api/product-search.ts
 import { API_BASE_URL } from '../config'
-import { Product } from '@/app/products2/columns'
+import { Product } from '@/app/products/columns'
 
 export type SortField = 'name' | 'price' | 'retailer_count'
 export type SortOrder = 'asc' | 'desc'
