@@ -14,6 +14,7 @@ import {
 import { ScriptList } from '@/components/script-list';
 import { useWarehouses } from '@/hooks/use-warehouses';
 import type { WarehouseId } from '@/lib/types';
+import { ContentLayout } from '@/components/admin-panel/content-layout';
 
 export default function HomePage() {
   const [selectedWarehouseId, setSelectedWarehouseId] = useState<WarehouseId | ''>('');
@@ -49,36 +50,38 @@ export default function HomePage() {
   const selectedWarehouse = warehouses.find(w => w.id === selectedWarehouseId);
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <div className="p-6">
-          <div className="max-w-xs">
-            <Select
-              value={selectedWarehouseId.toString()}
-              onValueChange={(value) => setSelectedWarehouseId(Number(value))}
-              disabled={isLoading}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={isLoading ? "Loading warehouses..." : "Select a warehouse"} />
-              </SelectTrigger>
-              <SelectContent>
-                {warehouses.map((warehouse) => (
-                  <SelectItem key={warehouse.id} value={warehouse.id.toString()}>
-                    {warehouse.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {selectedWarehouse?.description && (
-              <p className="mt-2 text-sm text-gray-500">
-                {selectedWarehouse.description}
-              </p>
-            )}
+    <ContentLayout title="Dashboard">
+      <div className="space-y-6">
+        <Card>
+          <div className="p-6">
+            <div className="max-w-xs">
+              <Select
+                value={selectedWarehouseId.toString()}
+                onValueChange={(value) => setSelectedWarehouseId(Number(value))}
+                disabled={isLoading}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={isLoading ? "Loading warehouses..." : "Select a warehouse"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {warehouses.map((warehouse) => (
+                    <SelectItem key={warehouse.id} value={warehouse.id.toString()}>
+                      {warehouse.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedWarehouse?.description && (
+                <p className="mt-2 text-sm text-gray-500">
+                  {selectedWarehouse.description}
+                </p>
+              )}
+            </div>
           </div>
-        </div>
-      </Card>
+        </Card>
 
-      {selectedWarehouse && <ScriptList warehouseId={selectedWarehouse.id} />}
-    </div>
+        {selectedWarehouse && <ScriptList warehouseId={selectedWarehouse.id} />}
+      </div>
+    </ContentLayout>
   );
 }
