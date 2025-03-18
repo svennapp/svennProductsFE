@@ -13,9 +13,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
 
 export function NavMain({
@@ -40,7 +37,7 @@ export function NavMain({
           <Collapsible
             key={item.title}
             asChild
-            defaultOpen={true}
+            defaultOpen={item.isActive}
             className="group/collapsible"
           >
             <SidebarMenuItem>
@@ -52,17 +49,17 @@ export function NavMain({
                 </SidebarMenuButton>
               </CollapsibleTrigger>
               <CollapsibleContent>
-                <SidebarMenuSub>
+                <SidebarMenu>
                   {item.items?.map((subItem) => (
-                    <SidebarMenuSubItem key={subItem.title}>
-                      <SidebarMenuSubButton asChild>
+                    <SidebarMenuItem key={subItem.title}>
+                      <SidebarMenuButton asChild>
                         <a href={subItem.url}>
                           <span>{subItem.title}</span>
                         </a>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
                   ))}
-                </SidebarMenuSub>
+                </SidebarMenu>
               </CollapsibleContent>
             </SidebarMenuItem>
           </Collapsible>

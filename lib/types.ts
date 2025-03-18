@@ -18,6 +18,7 @@ export interface Script {
   description: string
   last_execution_time?: string
   lastExecution?: ScriptExecution
+  job?: Job
 }
 
 export interface Job {

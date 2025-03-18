@@ -25,7 +25,7 @@ export type Product = {
     image_url: string
   }>
   retailer_count: number
-  median_price_all_retailers?: number
+  median_price_all_retailers: number | null
 }
 
 export const columns: ColumnDef<Product>[] = [
@@ -122,7 +122,7 @@ export const columns: ColumnDef<Product>[] = [
       )
     },
     cell: ({ row }) => {
-      const price = row.getValue("median_price_all_retailers") as number
+      const price = row.getValue("median_price_all_retailers") as number | null
       const product = row.original
       
       // Format the price as NOK currency

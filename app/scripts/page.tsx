@@ -9,12 +9,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { WAREHOUSES } from '@/lib/constants';
 import { ScriptList } from '@/components/script-list';
-import type { Warehouse } from '@/lib/types';
+import { useWarehouses } from '@/hooks/use-warehouses';
+import type { WarehouseResponse } from '@/lib/types';
 
 export default function ScriptsPage() {
-  const [selectedWarehouse, setSelectedWarehouse] = useState<Warehouse | ''>('');
+  const [selectedWarehouse, setSelectedWarehouse] = useState<number | null>(null);
+  const { warehouses, isLoading, error } = useWarehouses();
 
   return (
     <div className="space-y-6">
@@ -25,16 +26,16 @@ export default function ScriptsPage() {
         <CardContent>
           <div className="max-w-xs">
             <Select
-              value={selectedWarehouse}
-              onValueChange={(value) => setSelectedWarehouse(value as Warehouse)}
+              value={selectedWarehouse?.toString() || ''}
+              onValueChange={(value) => setSelectedWarehouse(Number(value))}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select a warehouse" />
+                <SelectValue placeholder={isLoading ? "Loading warehouses..." : "Select a warehouse"} />
               </SelectTrigger>
               <SelectContent>
-                {WAREHOUSES.map((warehouse) => (
-                  <SelectItem key={warehouse} value={warehouse}>
-                    {warehouse.charAt(0).toUpperCase() + warehouse.slice(1)}
+                {warehouses.map((warehouse) => (
+                  <SelectItem key={warehouse.id} value={warehouse.id.toString()}>
+                    {warehouse.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -43,7 +44,7 @@ export default function ScriptsPage() {
         </CardContent>
       </Card>
 
-      {selectedWarehouse && <ScriptList warehouse={selectedWarehouse} />}
+      {selectedWarehouse && <ScriptList warehouseId={selectedWarehouse} />}
     </div>
   );
 }

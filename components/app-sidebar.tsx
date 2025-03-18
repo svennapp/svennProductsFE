@@ -3,17 +3,10 @@
 import * as React from "react"
 import {
   Activity,
-  AudioWaveform,
-  BookOpen,
-  Bot,
-  Command,
-  Frame,
-  GalleryVerticalEnd,
-  Map,
   Package,
-  PieChart,
+  Search,
   Settings2,
-  SquareTerminal,
+  Workflow,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -25,10 +18,8 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarRail,
 } from "@/components/ui/sidebar"
 
-// This is sample data.
 const data = {
   user: {
     name: "User",
@@ -38,31 +29,41 @@ const data = {
   teams: [
     {
       name: "Svenn Products",
-      logo: Activity,
+      logo: Package,
       plan: "Enterprise",
     },
   ],
   navMain: [
     {
-      title: "Warehouses",
-      url: "/",
-      icon: Activity,
-      isActive: true,
-      items: [
-        {
-          title: "Spider Scripts",
-          url: "/",
-        }
-      ]
-    },
-    {
       title: "Products",
       url: "/products",
       icon: Package,
-      items: [{
-        title: "View Products ",
-        url: "/products",
-      }],
+      isActive: true,
+      items: [
+        {
+          title: "View Products",
+          url: "/products",
+        },
+        {
+          title: "Search Products",
+          url: "/products2",
+        },
+      ],
+    },
+    {
+      title: "Spider Scripts",
+      url: "/scripts",
+      icon: Workflow,
+      items: [
+        {
+          title: "View Scripts",
+          url: "/scripts",
+        },
+        {
+          title: "Run History",
+          url: "/scripts/history",
+        },
+      ],
     },
     {
       title: "Settings",
@@ -91,12 +92,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        {data.projects.length > 0 && <NavProjects projects={data.projects} />}
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />
       </SidebarFooter>
-      <SidebarRail />
     </Sidebar>
   )
 }

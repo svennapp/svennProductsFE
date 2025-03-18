@@ -25,7 +25,7 @@ export interface Product {
     image_id: number
     image_url: string
   }[]
-  median_price_all_retailers: number
+  median_price_all_retailers: number | null
   retailer_count: number
 }
 
@@ -129,7 +129,7 @@ export const columns: ColumnDef<Product>[] = [
       )
     },
     cell: ({ row }) => {
-      const price = row.getValue("median_price_all_retailers") as number
+      const price = row.getValue("median_price_all_retailers") as number | null
       const unit = row.original.base_unit
       
       return (

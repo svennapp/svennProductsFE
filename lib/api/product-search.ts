@@ -1,5 +1,6 @@
 // lib/api/product-search.ts
 import { API_BASE_URL } from '../config'
+import { Product } from '@/app/products2/columns'
 
 export type SortField = 'name' | 'price' | 'retailer_count'
 export type SortOrder = 'asc' | 'desc'
@@ -13,19 +14,7 @@ export interface ProductSearchParams {
 }
 
 export interface ProductSearchResponse {
-  items: Array<{
-    product_id: number
-    base_name: string
-    base_unit: string
-    nobb_code: string
-    ean_code: string | null
-    images: Array<{
-      image_id: number
-      image_url: string
-    }>
-    retailer_count: number
-    median_price_all_retailers?: number
-  }>
+  items: Product[]
   total: number
   limit: number
   offset: number
@@ -64,7 +53,16 @@ export async function searchProducts(params: ProductSearchParams): Promise<Produ
       items_count: data.items?.length || 0
     })
     
-    return data
+    // Transform the API response to ensure median_price_all_retailers is never undefined
+    const transformedData = {
+      ...data,
+      items: data.items.map((item: any) => ({
+        ...item,
+        median_price_all_retailers: item.median_price_all_retailers ?? null
+      }))
+    }
+    
+    return transformedData
   } catch (error) {
     console.error('Error searching products:', error)
     throw error

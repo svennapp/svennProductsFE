@@ -3,9 +3,8 @@
 import { usePathname } from 'next/navigation'
 import { AppSidebar } from './app-sidebar'
 import {
-  SidebarInset,
   SidebarProvider,
-  SidebarTrigger,
+  SidebarToggle,
 } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
 import {
@@ -30,10 +29,10 @@ export function Navigation({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset className="flex flex-col min-h-svh">
+      <main className="relative flex w-full flex-1 flex-col bg-background md:peer-data-[variant=inset]:m-2 md:peer-data-[state=collapsed]:peer-data-[variant=inset]:ml-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow">
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4">
-            <SidebarTrigger className="-ml-1" />
+            <SidebarToggle className="-ml-1" />
             <Separator orientation="vertical" className="mr-2 h-4" />
             <Breadcrumb>
               <BreadcrumbList>
@@ -53,7 +52,7 @@ export function Navigation({ children }: { children: React.ReactNode }) {
         <div className="flex-1 overflow-auto p-4">
           {children}
         </div>
-      </SidebarInset>
+      </main>
     </SidebarProvider>
   )
 }

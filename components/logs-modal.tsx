@@ -58,7 +58,7 @@ export function LogsModal({
       const params = new URLSearchParams()
       if (level !== 'all') params.append('level', level)
 
-      const response = await apiClient.get(
+      const response = await apiClient.get<Log[]>(
         `${API_ROUTES.jobLogs(executionId.toString())}?${params}`
       )
       setLogs(response)
