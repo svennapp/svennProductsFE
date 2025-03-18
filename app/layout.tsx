@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { Toaster } from '@/components/ui/toaster'
 import AuthProvider from '@/components/providers/session-provider'
-import { Navigation } from '@/components/navigation'
+import AdminPanelLayout from '@/components/admin-panel/admin-panel-layout'
 import { Providers } from './providers'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -24,7 +24,7 @@ export default function RootLayout({
         <Providers>
           <AuthProvider>
             <div className="min-h-screen bg-background">
-              <Navigation>{children}</Navigation>
+              <AdminPanelLayout>{children}</AdminPanelLayout>
             </div>
             <Toaster />
           </AuthProvider>

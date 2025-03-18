@@ -8,6 +8,7 @@ import { columns } from './columns'
 import { DataTable } from './data-table'
 import { ProductStatsPopover } from './product-stats-popover'
 import { searchProducts, SortField, SortOrder } from '@/lib/api/product-search'
+import { ContentLayout } from '@/components/admin-panel/content-layout'
 
 // Define the state type
 type TableState = {
@@ -169,19 +170,18 @@ export default function ProductsPage() {
   // Display error message if API request fails
   if (isError && shouldFetch) {
     return (
-      <div className="container mx-auto py-10">
+      <ContentLayout title="Products">
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
           <strong className="font-bold">Error: </strong>
           <span className="block sm:inline">{(error as Error).message || "Failed to load products"}</span>
         </div>
-      </div>
+      </ContentLayout>
     );
   }
 
   return (
-    <div className="container mx-auto py-10">
+    <ContentLayout title="Products">
       <div className="flex items-center mb-5">
-        <h1 className="text-2xl font-bold">Products</h1>
         <ProductStatsPopover />
       </div>
       <DataTable
@@ -196,6 +196,6 @@ export default function ProductsPage() {
         onSearchChange={handleSearchChange}
         isLoading={isLoading || isFetching}
       />
-    </div>
+    </ContentLayout>
   );
 }
