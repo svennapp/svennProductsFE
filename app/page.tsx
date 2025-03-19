@@ -1,87 +1,32 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { ScriptList } from '@/components/script-list';
-import { useWarehouses } from '@/hooks/use-warehouses';
-import type { WarehouseId } from '@/lib/types';
-import { ContentLayout } from '@/components/admin-panel/content-layout';
+import { useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 export default function HomePage() {
-  const [selectedWarehouseId, setSelectedWarehouseId] = useState<WarehouseId | ''>('');
-  const { warehouses, isLoading, error } = useWarehouses();
-  const { toast } = useToast();
+  const { data: session, status } = useSession();
+  const router = useRouter();
 
-  // Load selected warehouse from localStorage on mount
   useEffect(() => {
-    const savedWarehouse = localStorage.getItem('selectedWarehouse');
-    if (savedWarehouse) {
-      setSelectedWarehouseId(Number(savedWarehouse));
+    if (status === 'loading') return;
+    
+    if (session) {
+      // User is authenticated, redirect to dashboard
+      router.replace('/dashboard');
+    } else {
+      // User is not authenticated, redirect to login page
+      router.replace('/login');
     }
-  }, []);
+  }, [session, status, router]);
 
-  // Save selected warehouse to localStorage when it changes
-  useEffect(() => {
-    if (selectedWarehouseId) {
-      localStorage.setItem('selectedWarehouse', selectedWarehouseId.toString());
-    }
-  }, [selectedWarehouseId]);
-
-  // Show error toast if warehouse fetch fails
-  useEffect(() => {
-    if (error) {
-      toast({
-        title: "Error",
-        description: error,
-        variant: "destructive",
-      });
-    }
-  }, [error, toast]);
-
-  const selectedWarehouse = warehouses.find(w => w.id === selectedWarehouseId);
-
+  // Show a simple loading state while checking authentication
   return (
-    <ContentLayout title="Dashboard">
-      <div className="space-y-6">
-        <Card>
-          <div className="p-6">
-            <div className="max-w-xs">
-              <Select
-                value={selectedWarehouseId.toString()}
-                onValueChange={(value) => setSelectedWarehouseId(Number(value))}
-                disabled={isLoading}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={isLoading ? "Loading warehouses..." : "Select a warehouse"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {warehouses.map((warehouse) => (
-                    <SelectItem key={warehouse.id} value={warehouse.id.toString()}>
-                      {warehouse.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {selectedWarehouse?.description && (
-                <p className="mt-2 text-sm text-gray-500">
-                  {selectedWarehouse.description}
-                </p>
-              )}
-            </div>
-          </div>
-        </Card>
-
-        {selectedWarehouse && <ScriptList warehouseId={selectedWarehouse.id} />}
+    <div className="flex h-screen w-full items-center justify-center">
+      <div className="text-center">
+        <h2 className="text-xl font-semibold">Loading...</h2>
+        <p className="text-muted-foreground">Please wait while we redirect you</p>
       </div>
-    </ContentLayout>
+    </div>
   );
 }

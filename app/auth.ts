@@ -18,6 +18,23 @@ declare module 'next-auth/jwt' {
   }
 }
 
+// Hardcoded users for demonstration purposes
+// In a real application, these would come from a database
+const users = [
+  {
+    id: '1',
+    name: 'Admin User',
+    email: 'admin@svenn.com',
+    password: 'password123',
+  },
+  {
+    id: '2',
+    name: 'Test User',
+    email: 'test@example.com',
+    password: 'test123',
+  },
+]
+
 export const authOptions: AuthOptions = {
   providers: [
     Google({
@@ -33,19 +50,26 @@ export const authOptions: AuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null
 
-        // TODO: Add your credential verification logic here
-        // const user = await verifyCredentials(credentials.email, credentials.password)
-        // return user
-
-        // Temporary dummy response
-        return {
-          id: '1',
-          email: credentials.email,
-          name: 'User',
+        // Find user with matching email
+        const user = users.find(user => user.email === credentials.email)
+        
+        // Check if user exists and password matches
+        if (user && user.password === credentials.password) {
+          // Return user without the password
+          const { password, ...userWithoutPassword } = user
+          return userWithoutPassword
         }
+        
+        // Authentication failed
+        return null
       },
     }),
   ],
+  pages: {
+    signIn: '/login',
+    signOut: '/login',
+    error: '/login', // Error code passed in query string as ?error=
+  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
@@ -59,5 +83,10 @@ export const authOptions: AuthOptions = {
       }
       return session
     },
+  },
+  // For better security in production
+  session: {
+    strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
 }

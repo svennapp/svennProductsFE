@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import {
   Select,
@@ -15,7 +16,7 @@ import { useWarehouses } from '@/hooks/use-warehouses';
 import type { WarehouseId } from '@/lib/types';
 import { ContentLayout } from '@/components/admin-panel/content-layout';
 
-export default function Page() {
+export default function HomePage() {
   const [selectedWarehouseId, setSelectedWarehouseId] = useState<WarehouseId | ''>('');
   const { warehouses, isLoading, error } = useWarehouses();
   const { toast } = useToast();
@@ -55,7 +56,7 @@ export default function Page() {
           <div className="p-6">
             <div className="max-w-xs">
               <Select
-                value={selectedWarehouseId ? selectedWarehouseId.toString() : ''}
+                value={selectedWarehouseId.toString()}
                 onValueChange={(value) => setSelectedWarehouseId(Number(value))}
                 disabled={isLoading}
               >
