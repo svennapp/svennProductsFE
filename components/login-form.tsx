@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -24,6 +24,12 @@ export function LoginForm({
   const [isLoading, setIsLoading] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [isMounted, setIsMounted] = useState(false)
+
+  // Only render the component on the client side
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true)
@@ -52,13 +58,22 @@ export function LoginForm({
         return
       }
 
-      router.push("/")
+      router.push("/dashboard")
       router.refresh()
     } catch (error) {
       toast.error("Something went wrong")
     } finally {
       setIsLoading(false)
     }
+  }
+
+  // Return a placeholder during server rendering or before client hydration
+  if (!isMounted) {
+    return <div className="flex min-h-[400px] items-center justify-center" suppressHydrationWarning>
+      <div className="text-center">
+        <p className="text-muted-foreground">Loading login form...</p>
+      </div>
+    </div>
   }
 
   return (
