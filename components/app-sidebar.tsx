@@ -5,7 +5,7 @@ import {
   Activity,
   Package,
   Search,
-  Settings2,
+  User,
   Workflow,
 } from "lucide-react"
 
@@ -62,17 +62,13 @@ const data = {
       ],
     },
     {
-      title: "Settings",
-      url: "/settings",
-      icon: Settings2,
+      title: "Account",
+      url: "/account",
+      icon: User,
       items: [
         {
-          title: "General",
-          url: "/settings/general",
-        },
-        {
-          title: "Account",
-          url: "/settings/account",
+          title: "Profile",
+          url: "/account",
         },
       ],
     },

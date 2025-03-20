@@ -14,7 +14,7 @@ export function Footer() {
           <span className="mx-2">|</span>
           <Link href="/scripts" className="hover:underline">Scripts</Link>
           <span className="mx-2">|</span>
-          <Link href="/settings" className="hover:underline">Settings</Link>
+          <Link href="/account" className="hover:underline">Account</Link>
         </div>
       </div>
     </div>

@@ -34,7 +34,7 @@ export function LoginForm({
   const handleGoogleSignIn = async () => {
     setIsLoading(true)
     try {
-      await signIn("google", { callbackUrl: "/" })
+      await signIn("google", { callbackUrl: "/products" })
     } catch (error) {
       toast.error("Something went wrong with Google sign in")
     } finally {
@@ -58,7 +58,7 @@ export function LoginForm({
         return
       }
 
-      router.push("/dashboard")
+      router.push("/products")
       router.refresh()
     } catch (error) {
       toast.error("Something went wrong")

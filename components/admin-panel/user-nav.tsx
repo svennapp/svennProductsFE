@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { LogOut, Package, Settings2 } from "lucide-react";
+import { LogOut, Package, User } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 
 import { Button } from "@/components/ui/button";
@@ -77,9 +77,9 @@ export function UserNav() {
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem className="hover:cursor-pointer" asChild>
-            <Link href="/settings/account" className="flex items-center">
-              <Settings2 className="w-4 h-4 mr-3 text-muted-foreground" />
-              Settings
+            <Link href="/account" className="flex items-center">
+              <User className="w-4 h-4 mr-3 text-muted-foreground" />
+              Account
             </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>
