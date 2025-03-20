@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { LogOut, Package, Settings2 } from "lucide-react";
+import { signOut, useSession } from "next-auth/react";
 
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -22,10 +23,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export function UserNav() {
+  const { data: session } = useSession();
+  
+  // Use session data if available, otherwise fallback to defaults
   const user = {
-    name: "User",
-    email: "user@example.com",
-    avatar: "/avatars/user.jpg",
+    name: session?.user?.name || "User",
+    email: session?.user?.email || "user@example.com",
+    avatar: session?.user?.image || "/avatars/user.jpg",
+  };
+
+  const handleSignOut = async () => {
+    await signOut({ callbackUrl: '/login' });
   };
 
   return (
@@ -41,7 +49,7 @@ export function UserNav() {
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={user.avatar} alt="Avatar" />
                   <AvatarFallback className="bg-transparent">
-                    {user.name.charAt(0)}
+                    {user.name?.charAt(0) || 'U'}
                   </AvatarFallback>
                 </Avatar>
               </Button>
@@ -76,7 +84,7 @@ export function UserNav() {
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="hover:cursor-pointer" onClick={() => {}}>
+        <DropdownMenuItem className="hover:cursor-pointer" onClick={handleSignOut}>
           <LogOut className="w-4 h-4 mr-3 text-muted-foreground" />
           Sign out
         </DropdownMenuItem>

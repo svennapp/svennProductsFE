@@ -12,8 +12,8 @@ export default function HomePage() {
     if (status === 'loading') return;
     
     if (session) {
-      // User is authenticated, redirect to dashboard
-      router.replace('/dashboard');
+      // User is authenticated, redirect to products page
+      router.replace('/products');
     } else {
       // User is not authenticated, redirect to login page
       router.replace('/login');
