@@ -51,7 +51,7 @@ export default function ProductsPage() {
   // Initial state
   const initialState: TableState = {
     pageIndex: 0,
-    pageSize: 20,
+    pageSize: 10,
     sortingState: [],
     searchTerm: "",
   };
