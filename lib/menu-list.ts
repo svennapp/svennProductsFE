@@ -1,7 +1,7 @@
 import {
   Package,
   Workflow,
-  Settings2,
+  User,
   LucideIcon
 } from "lucide-react";
 
@@ -33,12 +33,6 @@ export function getMenuList(pathname: string): Group[] {
           label: "Spider Scripts",
           icon: Workflow,
           active: pathname.startsWith("/scripts")
-        },
-        {
-          href: "/settings",
-          label: "Settings",
-          icon: Settings2,
-          active: pathname.startsWith("/settings")
         }
       ]
     }
